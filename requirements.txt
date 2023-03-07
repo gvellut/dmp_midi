@@ -2,3 +2,4 @@ cmarkgfm>=2022.10.27
 click~=8.0
 mido~=1.2.0
 lxml~=4.0
+addict~=2.0

@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from io import StringIO
+import json
 from pathlib import Path
 import re
 from typing import Dict, List
 import unicodedata
 
+from addict import Dict as Addict
 import click
 from cmarkgfm import github_flavored_markdown_to_html as gfm
 from lxml import etree
@@ -15,33 +17,11 @@ class UnrecognizedDocumentError(Exception):
     pass
 
 
-DRUM_CHANNEL = 10
-
-ACCENT_TRACK = "AC"
-
-# mapping of the Roland TR-09
-NOTE_MAPPING = {
-    "BD": 36,
-    "RS": 37,
-    "SD": 38,
-    "CP": 39,
-    "CH": 42,
-    "LT": 43,
-    "OH": 46,
-    "MT": 47,
-    "CY": 49,
-    "HT": 50,
-    "CB": 56,
-}
-
-TICKS_PER_BEAT = 480
-
-
 @click.command()
 @click.option(
     "-i",
     "--input",
-    "input_readme",
+    "input_file",
     help="Path to local README.md from montoyamoraga/drum-machine-patterns",
     required=True,
     type=click.Path(exists=True, dir_okay=False, readable=True),
@@ -70,9 +50,16 @@ TICKS_PER_BEAT = 480
     type=click.IntRange(0, 127),
     default=127,
 )
-def main(input_readme, output_dir, base_velocity, accent_velocity):
-    document = parse_document(input_readme)
-    patterns = list_patterns(document)
+def main(input_file, output_dir, base_velocity, accent_velocity):
+    # 2 types of input : markdown or json depending on where it was downloaded
+    if input_file.endswith(".md"):
+        document = parse_gfm_document(input_file)
+        patterns = list_patterns(document)
+    elif input_file.endswith(".json"):
+        patterns = extract_patterns_from_json(input_file)
+
+    print(f"Found {len(patterns)} patterns")
+
     for pattern in patterns:
         to_midi(pattern, base_velocity, accent_velocity, output_dir)
 
@@ -83,8 +70,32 @@ class Event:
     params: Dict
 
 
+DRUM_CHANNEL = 10
+
+# mapping of the Roland TR-09
+NOTE_MAPPING = {
+    "BD": 36,
+    "RS": 37,
+    "SD": 38,
+    "CP": 39,
+    "CH": 42,
+    "LT": 43,
+    "OH": 46,
+    "MT": 47,
+    "CY": 49,
+    "HT": 50,
+    "TM": 54,
+    "CB": 56,
+}
+
+ACCENT_TRACK = "AC"
+
+TICKS_PER_BEAT = 480
+
+
 def to_midi(pattern: "Pattern", basic_velocity, accent_velocity, output_dir):
     time = 0
+    # each note is a 1/16th
     delta = TICKS_PER_BEAT // 4
 
     events = []
@@ -128,7 +139,10 @@ def to_midi(pattern: "Pattern", basic_velocity, accent_velocity, output_dir):
         track.append(Message(**event.params, time=delta))
         time = event.absolute_time
 
-    file_name = to_safe_filename(f"{pattern.main}_{pattern.sub}") + ".mid"
+    file_name = pattern.main
+    if pattern.sub:
+        file_name += f"_{pattern.sub}"
+    file_name = to_safe_filename(file_name) + ".mid"
     file_path = Path(output_dir) / file_name
 
     mid.save(str(file_path))
@@ -213,7 +227,7 @@ def parse_html_table(table):
     return parts
 
 
-def parse_document(text):
+def parse_gfm_document(text):
     with open(text, "r", encoding="utf-8") as f:
         html = gfm(f.read())
         rooted_xml = f"<doc>{html}</doc>"
@@ -221,6 +235,54 @@ def parse_document(text):
         buffer = StringIO(rooted_xml)
         parsed_xml = etree.parse(buffer, parser)
         return parsed_xml
+
+
+JSON_INSTRUMENT_MAPPING = {
+    "BassDrum": "BD",
+    "RimShot": "RS",
+    "SnareDrum": "SD",
+    "Clap": "CP",
+    "ClosedHiHat": "CH",
+    "LowTom": "LT",
+    "OpenHiHat": "OH",
+    "MediumTom": "MT",
+    "Cymbal": "CY",
+    "HighTom": "HT",
+    "Tambourine": "TM",
+    "Cowbell": "CB",
+    "accent": "AC",
+}
+
+# X to refer to the convetion in the README.md input file
+JSON_NOTE_X = "Note"
+JSON_ACCENT_X = "Accent"
+
+
+def extract_patterns_from_json(input_file_path):
+    with open(input_file_path, "r", encoding="utf-8") as f:
+        data = [Addict(p) for p in json.load(f)]
+
+    patterns = []
+    for pattern in data:
+        title = pattern.title
+
+        accent = None
+        instrument_tracks = []
+        for instrument, track in pattern.tracks.items():
+            instrument_code = JSON_INSTRUMENT_MAPPING[instrument]
+            if instrument_code == ACCENT_TRACK:
+                accent = Part(ACCENT_TRACK, [beat == JSON_ACCENT_X for beat in track])
+            else:
+                part = [beat == JSON_NOTE_X for beat in track]
+                instrument_tracks.append(Part(instrument_code, part))
+
+        length = len(instrument_tracks[0].pattern)
+
+        # just a single level name for the JSON file
+        pattern = Pattern(title, None, length, accent, instrument_tracks)
+        patterns.append(pattern)
+
+    return patterns
 
 
 def to_safe_filename(name):
