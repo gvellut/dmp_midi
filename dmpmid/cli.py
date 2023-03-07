@@ -179,21 +179,15 @@ def list_patterns(document):
 
 def analyze(parts):
     accent = None
-    accent_i = None
     instrument_tracks = []
     for i, part in enumerate(parts):
         # special case : not an instrument but change the velocity
         if part.instrument == ACCENT_TRACK:
             accent = part
-            accent_i = i
         else:
             instrument_tracks.append(part)
 
-    if accent_i is not None:
-        del parts[accent_i]
-
     length = len(instrument_tracks[0].pattern)
-
     return accent, instrument_tracks, length
 
 
