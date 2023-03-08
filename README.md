@@ -1,6 +1,6 @@
 # MIDI files for 200 Drum Machine Patterns + 260 Drum Machine Patterns
 
-The code builds MIDI versions of the drum machine patterns from the book *200 Drum Machine Patterns* and *260 Drum Machine Patterns* by __René-Pierre Bardet__.
+The code builds MIDI versions of the drum machine patterns from the books *200 Drum Machine Patterns* and *260 Drum Machine Patterns* by __René-Pierre Bardet__.
 
 See https://github.com/montoyamoraga/drum-machine-patterns for the input (README.md file) and https://github.com/stephenhandley/DrumMachinePatterns (.JSON file)
 
@@ -26,12 +26,8 @@ The tool needs Python >= 3.7.
 
 The generated MIDI follows the *General MIDI* convention: All instruments are on channel 10 and the notes used for the drum instruments are the ones listed on https://github.com/montoyamoraga/drum-machine-patterns
 
-You may have to shift the notes to different notes in your DAW if your drum instrument does not follow this convention.
+You may have to shift the notes to a different drum pad in your DAW if your drum kit does not follow this convention.
 
 ## Downloads
 
 Pre-generated MIDI files can be downloaded in the release section of this project.
-
-## TODO
-
-Add patterns from https://github.com/stephenhandley/DrumMachinePatterns and the book 260 Drum Patterns
