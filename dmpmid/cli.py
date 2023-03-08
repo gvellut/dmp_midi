@@ -129,7 +129,8 @@ def to_midi(pattern: "Pattern", basic_velocity, accent_velocity, output_dir):
     events = sorted(events, key=lambda e: e.absolute_time)
 
     # single track midi file
-    mid = MidiFile()
+    # TICKS_PER_BEAT same as  the default 480 so parameter not really necessary
+    mid = MidiFile(ticks_per_beat=TICKS_PER_BEAT)
     track = MidiTrack()
     mid.tracks.append(track)
 
@@ -253,7 +254,7 @@ JSON_INSTRUMENT_MAPPING = {
     "accent": "AC",
 }
 
-# X to refer to the convetion in the README.md input file
+# X to refer to the convention in the README.md input file
 JSON_NOTE_X = "Note"
 JSON_ACCENT_X = "Accent"
 

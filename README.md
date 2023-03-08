@@ -26,9 +26,11 @@ The tool needs Python >= 3.7.
     - Or use `input/Patterns.json` depending on the downloaded files
 - The MIDI files will be generated in the `output` folder
 
-The generated MIDI follows the *General MIDI* convention: All instruments are on channel 10 and the notes used for the drum instruments are the ones listed on https://github.com/montoyamoraga/drum-machine-patterns
+## Using the generated MIDI
 
-You may have to shift the notes to a different drum pad in your DAW if your drum kit does not follow this convention. Alternatively, you could edit the code in this project to map the instrument to a different MIDI note that fits your kit (by changing the numeric values in the `NOTE_MAPPING` global variable), then relaunch the tool to generate the custom MIDI files.
+The generated MIDI follows the *General MIDI* convention: All drum instruments are on a single track on channel 10 and there is a specific MIDI note for each drum instrument. Those notes are listed on https://github.com/montoyamoraga/drum-machine-patterns
+
+You may have to move some of the notes to a different drum pad in your DAW if your drum kit does not follow this convention. Alternatively, you could edit the code in this project to map the instrument to a different MIDI note that fits your kit (by changing the numeric values in the `NOTE_MAPPING` global variable), then relaunch the tool to generate the custom MIDI files.
 
 ## Downloads
 
