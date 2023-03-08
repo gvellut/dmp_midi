@@ -2,7 +2,9 @@
 
 The code builds MIDI versions of the drum machine patterns from the books *200 Drum Machine Patterns* and *260 Drum Machine Patterns* by __René-Pierre Bardet__.
 
-See https://github.com/montoyamoraga/drum-machine-patterns for the input (README.md file) and https://github.com/stephenhandley/DrumMachinePatterns (.JSON file)
+It uses as input digital versions of the patterns taken from:
+- https://github.com/montoyamoraga/drum-machine-patterns (*200 Drum Machine Patterns* only)
+- https://github.com/stephenhandley/DrumMachinePatterns (patterns from both books)
 
 ## Install
 
