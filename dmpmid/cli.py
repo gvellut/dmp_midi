@@ -10,7 +10,7 @@ from addict import Dict as Addict
 import click
 from cmarkgfm import github_flavored_markdown_to_html as gfm
 from lxml import etree
-from mido import Message, MidiFile, MidiTrack
+from mido import Message, MetaMessage, MidiFile, MidiTrack
 
 
 class UnrecognizedDocumentError(Exception):
@@ -70,7 +70,8 @@ class Event:
     params: Dict
 
 
-DRUM_CHANNEL = 10
+# mido has channels from 0 to 15 => 10 in General MIDI => 9 for mido
+DRUM_CHANNEL = 9
 
 # mapping of the Roland TR-09
 NOTE_MAPPING = {
@@ -114,23 +115,39 @@ def to_midi(pattern: "Pattern", basic_velocity, accent_velocity, output_dir):
             # assume always a value
             note = NOTE_MAPPING[instrument]
             events.append(
-                Event(time, {"type": "note_on", "note": note, "velocity": velocity})
+                Event(
+                    time,
+                    {
+                        "type": "note_on",
+                        "note": note,
+                        "velocity": velocity,
+                        "channel": DRUM_CHANNEL,
+                    },
+                )
             )
-            # TODO time value ? will it be cut off ? check
+
             events.append(
                 Event(
                     time + delta,
-                    {"type": "note_off", "note": note, "velocity": velocity},
+                    {
+                        "type": "note_on",
+                        "note": note,
+                        "velocity": 0,
+                        "channel": DRUM_CHANNEL,
+                    },
                 )
             )
 
         time += delta
 
+    # in case last note is not at the end of the pattern
+    end_of_track_time = delta * pattern.length
+
     events = sorted(events, key=lambda e: e.absolute_time)
 
     # single track midi file
     # TICKS_PER_BEAT same as  the default 480 so parameter not really necessary
-    mid = MidiFile(ticks_per_beat=TICKS_PER_BEAT)
+    mid = MidiFile(type=0, ticks_per_beat=TICKS_PER_BEAT)
     track = MidiTrack()
     mid.tracks.append(track)
 
@@ -139,6 +156,8 @@ def to_midi(pattern: "Pattern", basic_velocity, accent_velocity, output_dir):
         delta = event.absolute_time - time
         track.append(Message(**event.params, time=delta))
         time = event.absolute_time
+
+    track.append(MetaMessage("end_of_track", time=end_of_track_time - time))
 
     file_name = pattern.main
     if pattern.sub:

@@ -1,6 +1,7 @@
 /.vscode
 *.mid
 *.zip
+dmpmid/read.py
 
 
 # Byte-compiled / optimized / DLL files
